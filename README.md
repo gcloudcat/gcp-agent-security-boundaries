@@ -70,6 +70,7 @@ export PROJECT_NUMBER="112233445566"
 export REGION="us-central1"
 export KEYRING_NAME="agent-security-keyring"
 export KEY_NAME="agent-cmek"
+export KEY_VERSION="1"
 export AUTHORIZED_USER="developer@example.com"
 
 # 2. Enable Gemini Enterprise Agent Platform, Cloud KMS, and governance APIs
@@ -102,15 +103,16 @@ gcloud kms keys create "${KEY_NAME}" \
 If your security team ever suspects credential misuse or an active incident, disabling the key version immediately revokes access across every resource encrypted with that key.
 
 ```bash
-# Optional Kill-Switch: Instantly revoke data access by disabling CMEK Version 1
-gcloud kms keys versions disable 1 \
+# Optional Kill-Switch: Instantly revoke data access by disabling the CMEK version
+#   (In production with key rotation, disable all ENABLED versions on the key)
+gcloud kms keys versions disable "${KEY_VERSION}" \
   --key="${KEY_NAME}" \
   --keyring="${KEYRING_NAME}" \
   --location="${REGION}" \
   --project="${PROJECT_ID}"
 
 # Restore access once the incident is resolved
-gcloud kms keys versions enable 1 \
+gcloud kms keys versions enable "${KEY_VERSION}" \
   --key="${KEY_NAME}" \
   --keyring="${KEYRING_NAME}" \
   --location="${REGION}" \

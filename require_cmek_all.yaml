@@ -1,0 +1,4 @@
+name: projects/enterprise-agent-prod/policies/gcp.restrictNonCmekServices
+spec:
+  rules:
+  - denyAll: true

@@ -122,21 +122,15 @@ gcloud kms keys versions enable 1 \
 Apply Organization Policies on the project (or parent folder) so developers cannot accidentally create non-US resources, invoke non-US model inference endpoints, skip CMEK encryption on **Agent Platform** resources, or export static JSON service account keys.
 
 ```bash
-# 1. Lock resource creation at rest strictly to US locations
+# 1. Lock stateful resource creation across all GCP services strictly to US locations
 gcloud resource-manager org-policies allow gcp.resourceLocations \
   in:us-locations \
   --project="${PROJECT_ID}"
 
-# 2. Block non-US Agent Platform endpoints so stateless LLM inference stays in the US
-#    (Technical endpoint group IDs still use the 'aiplatform' service prefix)
+# 2. Block all non-US and global Agent Platform endpoints so stateless LLM inference stays in the US
+#    (Technical group ID uses the 'aiplatform' prefix; add in:global-<service>-endpoints as needed)
 gcloud resource-manager org-policies deny gcp.restrictEndpointUsage \
-  in:aiplatform-eu-endpoints \
-  in:aiplatform-europe-non-eu-endpoints \
-  in:aiplatform-asia-endpoints \
-  in:aiplatform-americas-non-us-endpoints \
-  in:aiplatform-middleeast-endpoints \
-  in:aiplatform-africa-endpoints \
-  in:aiplatform-australia-endpoints \
+  in:non-us-aiplatform-endpoints \
   --project="${PROJECT_ID}"
 
 # 3. Require CMEK on newly created Agent Platform resources

@@ -44,7 +44,6 @@ gcp-agent-security-boundaries/
 ├── README.md               # Step-by-step gcloud setup guide + test prompts
 ├── .env.example            # Placeholder environment variables template
 ├── access_level.yaml       # Sample Access Context Manager basic level spec
-├── require_cmek_all.yaml   # Sample Org Policy spec enforcing CMEK across all supported services
 └── agent/
     ├── __init__.py
     ├── agent.py            # Sample 5-tool ADK agent to verify every guardrail live
@@ -120,7 +119,7 @@ gcloud kms keys versions enable 1 \
 
 ### Step 2: Enforce Preventative Organization Policies (Data Residency, CMEK & Keyless Auth)
 
-Apply Organization Policies on the project (or parent folder) so developers cannot accidentally create non-US resources, invoke non-US model inference endpoints, spin up CMEK-capable resources without a customer-managed key, or export static JSON service account keys.
+Apply Organization Policies on the project (or parent folder) so developers cannot accidentally create non-US resources, invoke non-US model inference endpoints, skip CMEK encryption on **Agent Platform** resources, or export static JSON service account keys.
 
 ```bash
 # 1. Lock resource creation at rest strictly to US locations
@@ -140,23 +139,18 @@ gcloud resource-manager org-policies deny gcp.restrictEndpointUsage \
   in:aiplatform-australia-endpoints \
   --project="${PROJECT_ID}"
 
-# 3. Require CMEK across ALL CMEK-supported GCP services (no unencrypted data stores)
-cat <<EOF > require_cmek_all.yaml
-name: projects/${PROJECT_ID}/policies/gcp.restrictNonCmekServices
-spec:
-  rules:
-  - denyAll: true
-EOF
-
-gcloud org-policies set-policy require_cmek_all.yaml
+# 3. Require CMEK on newly created Agent Platform resources
+#    (For production, append any data stores your agent uses—e.g. storage.googleapis.com,
+#     bigquery.googleapis.com—or enforce across all services via Step 4 Assured Workloads)
+gcloud resource-manager org-policies deny gcp.restrictNonCmekServices \
+  aiplatform.googleapis.com \
+  --project="${PROJECT_ID}"
 
 # 4. Block downloadable service account keys (require keyless SPIFFE / Workload Identity)
 gcloud resource-manager org-policies enable-enforce \
   iam.disableServiceAccountKeyCreation \
   --project="${PROJECT_ID}"
 ```
-
-> **Tip:** `gcp.restrictNonCmekServices` covers every GCP service that supports CMEK. To also prevent developers from enabling services that do not support CMEK, pair this with `constraints/gcp.restrictServiceUsage` (or use **Assured Workloads** in Step 4, which configures both automatically).
 
 ### Step 3: Wrap the Project in a VPC Service Controls Perimeter
 
@@ -201,7 +195,14 @@ gcloud assured workloads create \
 
 ## Testing the Guardrails Live (`agent/`)
 
-The optional sample ADK agent in [`agent/agent.py`](agent/agent.py) exposes five tools so you can verify every security boundary live once deployed to **Agent Runtime** on **Gemini Enterprise Agent Platform**:
+Run the sample ADK agent in [`agent/agent.py`](agent/agent.py) locally in under a minute (or deploy `app` to **Agent Runtime** on **Gemini Enterprise Agent Platform**) to verify each security boundary live:
+
+```bash
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r agent/requirements.txt
+cp .env.example .env && source .env
+adk web
+```
 
 | # | Boundary Tested | Example Prompt | Expected Outcome |
 | :--- | :--- | :--- | :--- |

@@ -255,7 +255,7 @@ def process_in_foreign_region(
     }
 
 
-agent = Agent(
+root_agent = Agent(
     model="gemini-2.5-flash",
     name="boundary_verifier_agent",
     description=(
@@ -280,4 +280,5 @@ agent = Agent(
     ],
 )
 
-app = agent_engines.AdkApp(agent=agent, enable_tracing=True)
+agent = root_agent
+app = agent_engines.AdkApp(agent=root_agent, enable_tracing=True)

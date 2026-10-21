@@ -71,7 +71,6 @@ export REGION="us-central1"
 export KEYRING_NAME="agent-security-keyring"
 export KEY_NAME="agent-cmek"
 export KEY_VERSION="1"
-export AUTHORIZED_USER="developer@example.com"
 
 # 2. Enable Gemini Enterprise Agent Platform, Cloud KMS, and governance APIs
 gcloud services enable \
@@ -150,18 +149,12 @@ gcloud resource-manager org-policies enable-enforce \
 
 ### Step 3: Wrap the Project in a VPC Service Controls Perimeter
 
-Create an Access Level for authorized operators and enclose the agent project in a VPC Service Controls perimeter restricting **Gemini Enterprise Agent Platform** (`aiplatform.googleapis.com`) and **Cloud KMS** (`cloudkms.googleapis.com`), plus whichever data backend APIs (such as `bigquery.googleapis.com` or `sqladmin.googleapis.com`) your agent uses.
+Define trusted entry context in [`access_level.yaml`](access_level.yaml) (corporate IP ranges, approved regions, managed devices, or IAM principals) and enclose the agent project in a VPC Service Controls perimeter restricting **Gemini Enterprise Agent Platform** (`aiplatform.googleapis.com`) and **Cloud KMS** (`cloudkms.googleapis.com`), plus whichever data backend APIs (such as `bigquery.googleapis.com` or `sqladmin.googleapis.com`) your agent uses.
 
 ```bash
-# 1. Create an Access Level spec for authorized administrators
-#    (Append serviceAccount:service-${PROJECT_NUMBER}@... for any serverless runtimes or UIs you use)
-cat <<EOF > access_level.yaml
-- members:
-  - user:${AUTHORIZED_USER}
-EOF
-
-gcloud access-context-manager levels create agent_admin_access \
-  --title="Authorized Agent Administrators" \
+# 1. Customize access_level.yaml (corporate IP CIDRs, regions, devices, or principals), then apply:
+gcloud access-context-manager levels create trusted_enterprise_access \
+  --title="Trusted Enterprise Perimeter Access" \
   --basic-level-spec="access_level.yaml" \
   --policy="${ACCESS_POLICY_ID}"
 
@@ -170,7 +163,7 @@ gcloud access-context-manager perimeters create enterprise_agent_perimeter \
   --title="Enterprise Agent Data Boundary" \
   --resources="projects/${PROJECT_NUMBER}" \
   --restricted-services="aiplatform.googleapis.com,cloudkms.googleapis.com" \
-  --access-levels="accessPolicies/${ACCESS_POLICY_ID}/accessLevels/agent_admin_access" \
+  --access-levels="accessPolicies/${ACCESS_POLICY_ID}/accessLevels/trusted_enterprise_access" \
   --policy="${ACCESS_POLICY_ID}"
 ```
 

@@ -154,6 +154,7 @@ Create an Access Level for authorized operators and enclose the agent project in
 
 ```bash
 # 1. Create an Access Level spec for authorized administrators
+#    (Append serviceAccount:service-${PROJECT_NUMBER}@... for any serverless runtimes or UIs you use)
 cat <<EOF > access_level.yaml
 - members:
   - user:${AUTHORIZED_USER}

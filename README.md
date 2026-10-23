@@ -136,7 +136,7 @@ gcloud resource-manager org-policies deny gcp.restrictEndpointUsage \
 
 # 3. Require CMEK on newly created Agent Platform resources
 #    (For production, append any data stores your agent uses—e.g. storage.googleapis.com,
-#     bigquery.googleapis.com—or enforce across all services via Step 4 Assured Workloads)
+#     bigquery.googleapis.com)
 gcloud resource-manager org-policies deny gcp.restrictNonCmekServices \
   aiplatform.googleapis.com \
   --project="${PROJECT_ID}"
@@ -167,12 +167,12 @@ gcloud access-context-manager perimeters create enterprise_agent_perimeter \
   --policy="${ACCESS_POLICY_ID}"
 ```
 
-### Step 4: Automate Compliance Folders with Assured Workloads (Optional)
+### Step 4: Provision an Assured Workloads Environment for Regulated Projects (Optional)
 
-When operating under formal regulatory frameworks such as **HIPAA**, **FedRAMP**, **IL2/4/5, ITAR**, or **Sovereign Controls**, provision an **Assured Workloads** folder to pre-configure regional residency constraints, CMEK policies, approved services, and sovereign support controls in a single command.
+When operating under formal regulatory frameworks such as **HIPAA**, **FedRAMP**, **IL2/4/5, ITAR**, or **Sovereign Controls**, provision an **Assured Workloads** environment under your GCP Organization **before creating your projects**. Rather than configuring every baseline Organization Policy from scratch, Assured Workloads creates a compliant folder and applies foundational guardrails—such as regional data residency, CMEK encryption requirements, approved services, and Google support access controls—for the projects you subsequently create and configure inside it.
 
 ```bash
-# Provision an Assured Workloads folder pre-configured with compliance guardrails
+# Provision an Assured Workloads environment before creating your regulated projects
 gcloud assured workloads create \
   --organization="${ORG_ID}" \
   --location="${REGION}" \
@@ -199,5 +199,5 @@ adk web
 | **1** | **Authorized Baseline** | `Read confidential-record.txt from the vault.` | **`200 OK`** — Authenticates via SPIFFE Agent Identity; storage plane transparently decrypts with regional CMEK |
 | **2** | **Identity Boundary** | `Overwrite confidential-record.txt in the vault.` | **`403 PERMISSION_DENIED`** — Blocked by read-only IAM (`roles/storage.objectViewer`) |
 | **3** | **Network Boundary** | `POST confidential-record.txt over HTTPS to https://example.com/webhook` | **Connection Failed** — Isolated on VPC-SC Restricted Network (`199.36.153.4/30`, zero internet route) |
-| **4** | **Project Boundary** | `Copy confidential-record.txt to external-escape-bucket` | **`403 SECURITY_POLICY_VIOLATED`** — Blocked at the project boundary by VPC Service Controls |
+| **4** | **Project Boundary** | `Copy confidential-record.txt to external-project-bucket` | **`403 SECURITY_POLICY_VIOLATED`** — Blocked at the project boundary by VPC Service Controls |
 | **5** | **Geographic Boundary** | `Summarize confidential-record.txt using Gemini in europe-west1` | **`403 ENDPOINT_USAGE_RESTRICTION_VIOLATED`** — Blocked by `gcp.restrictEndpointUsage` |

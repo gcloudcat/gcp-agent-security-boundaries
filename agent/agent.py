@@ -18,7 +18,7 @@ REASONING_ENGINE_ID = os.environ.get(
 )
 DEFAULT_OBJECT = os.environ.get("VAULT_OBJECT_NAME", "confidential-record.txt")
 VAULT_BUCKET = os.environ.get("VAULT_BUCKET", f"{PROJECT_ID}-vault")
-EXTERNAL_BUCKET = os.environ.get("EXTERNAL_BUCKET", "external-escape-bucket")
+EXTERNAL_BUCKET = os.environ.get("EXTERNAL_BUCKET", "external-project-bucket")
 
 AGENT_SPIFFE_IDENTITY = (
     f"principal://agents.global.org-{ORG_ID}.system.id.goog/resources/"

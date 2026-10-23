@@ -76,6 +76,14 @@ def read_vault_record(
     }
   except Exception as e:  # pylint: disable=broad-exception-caught
     err_str = str(e)
+    if "404" in err_str or "NotFound" in type(e).__name__:
+      return {
+          "status": "NOT_FOUND",
+          "agent_identity": AGENT_SPIFFE_IDENTITY,
+          "spiffe_svid_uri": AGENT_SPIFFE_SVID_URI,
+          "object_uri": uri,
+          "error": err_str,
+      }
     is_kms_disabled = "KEY_DISABLED" in err_str or "disabled" in err_str.lower()
     return {
         "status": (

@@ -1,10 +1,10 @@
 # Define the trusted context allowed into your VPC Service Controls perimeter.
 # Uncomment/combine whichever conditions fit your organization (fields inside one block use AND):
 
-- ipSubnetworks:
-  - "203.0.113.0/24"            # Corporate VPN / Cloud NAT egress CIDR range(s)
-  regions:
+- regions:
   - "US"                        # Allowed client origin region(s)
+  # ipSubnetworks:              # Corporate VPN / Cloud NAT public egress CIDR range(s)
+  # - "192.0.4.0/24"
   # members:                    # Specific users, groups, or Google-managed service agents
   # - "user:developer@example.com"
   # - "serviceAccount:service-112233445566@gcp-sa-aiplatform-re.iam.gserviceaccount.com"

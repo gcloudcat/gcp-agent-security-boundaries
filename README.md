@@ -62,22 +62,25 @@ Set reusable environment variables once so all downstream Cloud KMS, Organizatio
 
 ```bash
 # 1. Set environment placeholders for your GCP Organization and Agent Project
-export ORG_ID="123456789012"
-export BILLING_ID="012345-6789AB-CDEF01"
-export ACCESS_POLICY_ID="987654321098"
-export PROJECT_ID="enterprise-agent-prod"
-export PROJECT_NUMBER="112233445566"
+export ORG_ID="123456789012"                  # gcloud organizations list
+export BILLING_ID="012345-6789AB-CDEF01"      # gcloud billing accounts list
+export ACCESS_POLICY_ID="987654321098"        # gcloud access-context-manager policies list --organization="${ORG_ID}"
+export PROJECT_ID="enterprise-agent-prod"     # Your target GCP Project ID
+export PROJECT_NUMBER="112233445566"          # gcloud projects describe "${PROJECT_ID}" --format="value(projectNumber)"
 export REGION="us-central1"
 export KEYRING_NAME="agent-security-keyring"
 export KEY_NAME="agent-cmek"
 export KEY_VERSION="1"
 
-# 2. Enable Gemini Enterprise Agent Platform, Cloud KMS, and governance APIs
+# 2. Enable Gemini Enterprise Agent Platform, Cloud KMS, Storage, and governance APIs
 gcloud services enable \
   aiplatform.googleapis.com \
   cloudkms.googleapis.com \
+  storage.googleapis.com \
+  cloudresourcemanager.googleapis.com \
   orgpolicy.googleapis.com \
   accesscontextmanager.googleapis.com \
+  assuredworkloads.googleapis.com \
   --project="${PROJECT_ID}"
 ```
 
@@ -185,12 +188,36 @@ gcloud assured workloads create \
 
 ## Testing the Guardrails Live (`agent/`)
 
-Run the sample ADK agent in [`agent/agent.py`](agent/agent.py) locally in under a minute (or deploy `app` to **Agent Runtime** on **Gemini Enterprise Agent Platform**) to verify each security boundary live:
+1. **Create the CMEK-encrypted test vault bucket and sample record** (using the Cloud KMS key from Step 1):
+
+```bash
+cp .env.example .env && source .env
+
+# Grant the Cloud Storage service agent permission to encrypt/decrypt with your Step 1 CMEK key
+gcloud storage service-agent --project="${PROJECT_ID}" >/dev/null
+gcloud kms keys add-iam-policy-binding "${KEY_NAME}" \
+  --keyring="${KEYRING_NAME}" \
+  --location="${REGION}" \
+  --member="serviceAccount:service-${PROJECT_NUMBER}@gs-project-accounts.iam.gserviceaccount.com" \
+  --role="roles/cloudkms.cryptoKeyEncrypterDecrypter" \
+  --project="${PROJECT_ID}"
+
+# Create the regional CMEK-encrypted vault bucket and upload a sample confidential record
+gcloud storage buckets create "gs://${VAULT_BUCKET}" \
+  --location="${REGION}" \
+  --default-encryption-key="projects/${PROJECT_ID}/locations/${REGION}/keyRings/${KEYRING_NAME}/cryptoKeys/${KEY_NAME}" \
+  --uniform-bucket-level-access \
+  --project="${PROJECT_ID}"
+
+echo "Sample confidential record protected by CMEK and VPC-SC." | \
+  gcloud storage cp - "gs://${VAULT_BUCKET}/${VAULT_OBJECT_NAME}"
+```
+
+2. **Run the sample ADK agent** in [`agent/agent.py`](agent/agent.py) locally (or deploy `app` to **Agent Runtime** on **Gemini Enterprise Agent Platform**) to verify each security boundary live:
 
 ```bash
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r agent/requirements.txt
-cp .env.example .env && source .env
 adk web
 ```
 

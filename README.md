@@ -167,12 +167,12 @@ gcloud access-context-manager perimeters create enterprise_agent_perimeter \
   --policy="${ACCESS_POLICY_ID}"
 ```
 
-### Step 4: Provision an Assured Workloads Environment for Regulated Projects (Optional)
+### Step 4: Provision a Folder-Level Assured Workloads Environment (Optional)
 
-When operating under formal regulatory frameworks such as **HIPAA**, **FedRAMP**, **IL2/4/5, ITAR**, or **Sovereign Controls**, provision an **Assured Workloads** environment under your GCP Organization **before creating your projects**. Rather than configuring every baseline Organization Policy from scratch, Assured Workloads creates a compliant folder and applies foundational guardrails—such as regional data residency, CMEK encryption requirements, approved services, and Google support access controls—for the projects you subsequently create and configure inside it.
+Whereas Steps 1–3 configure controls on an individual project, **Assured Workloads** operates at the **folder level** under your GCP Organization. When building under formal regulatory frameworks such as **HIPAA**, **FedRAMP**, **IL2/4/5, ITAR**, or **Sovereign Controls**, you provision an **Assured Workloads folder** **before creating your projects**. Rather than configuring every baseline Organization Policy from scratch, Assured Workloads creates a dedicated folder under your Organization and applies foundational folder-level guardrails—such as regional data residency, CMEK encryption requirements, approved services, and Google support access controls—that are automatically inherited by the projects you subsequently create and configure inside that folder.
 
 ```bash
-# Provision an Assured Workloads environment before creating your regulated projects
+# Provision a folder-level Assured Workloads environment under your Organization (before creating projects inside it)
 gcloud assured workloads create \
   --organization="${ORG_ID}" \
   --location="${REGION}" \

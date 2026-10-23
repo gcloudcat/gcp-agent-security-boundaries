@@ -188,10 +188,17 @@ gcloud assured workloads create \
 
 ## Testing the Guardrails Live (`agent/`)
 
-1. **Create the CMEK-encrypted test vault bucket and sample record** (using the Cloud KMS key from Step 1):
+1. **Create the CMEK-encrypted test vault bucket and sample record** (reusing the variables and Cloud KMS key from Steps 0–1):
 
 ```bash
-cp .env.example .env && source .env
+export GOOGLE_GENAI_USE_VERTEXAI="TRUE"
+export GOOGLE_CLOUD_PROJECT="${PROJECT_ID}"
+export GOOGLE_CLOUD_PROJECT_NUMBER="${PROJECT_NUMBER}"
+export GOOGLE_CLOUD_ORG_ID="${ORG_ID}"
+export GOOGLE_CLOUD_LOCATION="${REGION}"
+export VAULT_BUCKET="${PROJECT_ID}-vault"
+export EXTERNAL_BUCKET="external-project-bucket"
+export VAULT_OBJECT_NAME="confidential-record.txt"
 
 # Grant the Cloud Storage service agent permission to encrypt/decrypt with your Step 1 CMEK key
 gcloud storage service-agent --project="${PROJECT_ID}" >/dev/null
